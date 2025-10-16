@@ -1,4 +1,4 @@
-# Vault Manager Extension for Realms
+# Vault Extension for Realms
 
 A secure digital asset and token management extension that provides treasury functionality for Realms.
 
@@ -17,7 +17,7 @@ This extension embeds the full vault logic directly in the realm_backend caniste
 
 ```
 realm_backend canister
-├── vault_manager extension
+├── vault extension
 │   ├── vault_lib/ (core logic)
 │   │   ├── candid_types.py
 │   │   ├── constants.py
@@ -57,11 +57,11 @@ pytest tests/
 
 ```bash
 # Install from GitHub release
-realms extension install vault_manager \
-  --from https://github.com/smart-social-contracts/realms-extension-vault/releases/download/v0.1.0/vault_manager-0.1.0.zip
+realms extension install vault \
+  --from https://github.com/smart-social-contracts/realms-extension-vault/releases/download/v0.1.0/vault-0.1.0.zip
 
 # Or from extension registry (future)
-realms extension install vault_manager@0.1.0
+realms extension install vault@0.1.0
 
 # Deploy
 realms deploy
@@ -107,6 +107,8 @@ yield treasury.refresh()
 
 The extension exposes the following functions:
 
+The extension exposes the following functions:
+
 - `get_balance(args)` - Get balance for a principal
 - `get_status(args)` - Get vault status and stats
 - `get_transactions(args)` - Get transaction history for a principal
@@ -139,8 +141,8 @@ realms-extension-vault/
 │   ├── __init__.py
 │   └── entry.py
 ├── frontend/
-│   ├── lib/extensions/vault_manager/
-│   └── routes/(sidebar)/extensions/vault_manager/
+│   ├── lib/extensions/vault/
+│   └── routes/(sidebar)/extensions/vault/
 ├── tests/
 │   └── test_vault.py
 ├── manifest.json
@@ -158,7 +160,7 @@ pytest tests/ -v
 
 ```bash
 realms extension package .
-# Creates: vault_manager-0.1.0.zip
+# Creates: vault-0.1.0.zip
 ```
 
 ### Publishing a Release
@@ -168,8 +170,8 @@ git tag -a v0.1.0 -m "Release 0.1.0"
 git push origin v0.1.0
 
 # Create GitHub release with package
-gh release create v0.1.0 vault_manager-0.1.0.zip \
-  --title "Vault Manager v0.1.0" \
+gh release create v0.1.0 vault-0.1.0.zip \
+  --title "Vault v0.1.0" \
   --notes "Initial release"
 ```
 

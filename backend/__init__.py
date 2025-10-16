@@ -1,5 +1,5 @@
 """
-Vault Manager Extension for Realms
+Vault Extension for Realms
 
 Provides secure treasury functionality with:
 - ckBTC balance tracking

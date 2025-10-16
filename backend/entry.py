@@ -1,5 +1,5 @@
 """
-Vault Manager Extension Entry Point
+Vault Extension Entry Point
 
 This extension provides treasury functionality directly embedded in the realm_backend canister.
 No separate vault canister is required - all logic runs in the same canister for maximum performance.
@@ -12,7 +12,7 @@ from typing import Any, Dict
 from kybra import Async, ic
 from kybra_simple_logging import get_logger
 
-logger = get_logger("extensions.vault_manager")
+logger = get_logger("extensions.vault")
 
 
 def convert_principals_to_strings(obj):
@@ -39,7 +39,7 @@ def get_balance(args: str) -> str:
     Returns:
         JSON string with {"success": bool, "data": {"Balance": {...}}}
     """
-    logger.info(f"vault_manager.get_balance called with args: {args}")
+    logger.info(f"vault.get_balance called with args: {args}")
     
     try:
         from .vault_lib.entities import Balance
@@ -78,7 +78,7 @@ def get_status(args: str) -> str:
     Returns:
         JSON string with vault stats
     """
-    logger.info(f"vault_manager.get_status called")
+    logger.info(f"vault.get_status called")
     
     try:
         from .vault_lib.entities import (
@@ -138,7 +138,7 @@ def get_transactions(args: str) -> str:
     Returns:
         JSON string with transaction list
     """
-    logger.info(f"vault_manager.get_transactions called with args: {args}")
+    logger.info(f"vault.get_transactions called with args: {args}")
     
     try:
         from .vault_lib.entities import VaultTransaction
@@ -187,7 +187,7 @@ def transfer(args: str) -> Async[str]:
     Returns:
         JSON string with transaction ID
     """
-    logger.info(f"vault_manager.transfer called with args: {args}")
+    logger.info(f"vault.transfer called with args: {args}")
     
     try:
         from kybra import Principal
@@ -270,7 +270,7 @@ def refresh(args: str) -> Async[str]:
     Returns:
         JSON string with sync summary
     """
-    logger.info(f"vault_manager.refresh called")
+    logger.info(f"vault.refresh called")
     
     try:
         from .vault_lib.entities import Canisters, VaultTransaction, Balance, app_data
