@@ -30,7 +30,7 @@ REALM_DOCKER_IMAGE="ghcr.io/smart-social-contracts/realms:c83b8ebaa99cc2bd112c11
 
 # Configuration
 EXTENSION_NAME="vault"
-CONTAINER_NAME="vault-test-$(date +%s)"
+CONTAINER_NAME="vault-test" #-$(date +%s)"
 EXTENSION_ROOT_DIR="$(pwd)"
 
 # Step 0: Pull the Docker image
@@ -46,6 +46,7 @@ log_info "Creating Docker container..."
 
 docker run -d \
     --name "$CONTAINER_NAME" \
+    --init \
     -p 8001:8000 \
     "$REALM_DOCKER_IMAGE" \
     sleep infinity
