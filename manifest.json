@@ -1,6 +1,6 @@
 {
   "name": "vault",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Secure digital asset and token management extension for Realms. Provides treasury functionality with ckBTC support, transaction history tracking, and balance management.",
   "author": "Smart Social Contracts",
   "repository": "https://github.com/smart-social-contracts/realms-extension-vault",
@@ -9,7 +9,9 @@
     "min_version": "0.1.0",
     "max_version": "0.2.x"
   },
-  "permissions": ["treasury_management"],
+  "permissions": [
+    "treasury_management"
+  ],
   "entry_points": [
     "get_balance",
     "get_status",
@@ -17,8 +19,12 @@
     "transfer",
     "refresh"
   ],
-  "profiles": ["admin"],
-  "categories": ["finances"],
+  "profiles": [
+    "admin"
+  ],
+  "categories": [
+    "finances"
+  ],
   "icon": "wallet",
   "doc_url": "https://github.com/smart-social-contracts/realms-extension-vault",
   "url_path": null,
