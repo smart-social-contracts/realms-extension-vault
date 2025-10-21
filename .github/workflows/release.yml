@@ -1,0 +1,126 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Type of release (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      create_github_release:
+        description: 'Create GitHub Release'
+        required: false
+        default: true
+        type: boolean
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+      
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install semver pipx
+        python -m pipx ensurepath
+        
+    - name: Bump version
+      id: bump_version
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Extract current version from manifest.json
+        CURRENT_VERSION=$(jq -r '.version' manifest.json)
+        
+        # Calculate new version
+        NEW_VERSION=$(python -c "import semver; v=semver.VersionInfo.parse('${CURRENT_VERSION}'); print(v.bump_${{ github.event.inputs.release_type }}())")
+        
+        # Update manifest.json with new version
+        jq --arg version "${NEW_VERSION}" '.version = $version' manifest.json > manifest.json.tmp
+        mv manifest.json.tmp manifest.json
+        
+        echo "CURRENT_VERSION=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+        echo "NEW_VERSION=${NEW_VERSION}" >> $GITHUB_OUTPUT
+        
+    - name: Clone realms framework
+      run: |
+        git clone https://github.com/smart-social-contracts/realms.git .realms
+        
+    - name: Install realms CLI
+      run: |
+        cd .realms
+        pipx install -e cli/
+        
+    - name: Package extension
+      run: |
+        cd .realms
+        realms extension package --extension-id vault --source-dir ..
+        mv vault.zip ../vault.zip
+        
+    - name: Commit and push changes
+      run: |
+        git add manifest.json
+        git commit -m "Bump version to ${{ steps.bump_version.outputs.NEW_VERSION }}"
+        git tag -a "v${{ steps.bump_version.outputs.NEW_VERSION }}" -m "Release v${{ steps.bump_version.outputs.NEW_VERSION }}"
+        git push origin
+        git push origin --tags
+        
+    - name: Create Release
+      if: ${{ github.event.inputs.create_github_release == 'true' }}
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.bump_version.outputs.NEW_VERSION }}
+        name: Release v${{ steps.bump_version.outputs.NEW_VERSION }}
+        files: vault.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        body: |
+          # Release v${{ steps.bump_version.outputs.NEW_VERSION }}
+          
+          Secure ckBTC treasury management extension for Realms.
+          
+          ## What's Changed
+          - Version bump from v${{ steps.bump_version.outputs.CURRENT_VERSION }} to v${{ steps.bump_version.outputs.NEW_VERSION }}
+          
+          ## Installation
+          
+          ```bash
+          realms extension install vault --from https://github.com/${{ github.repository }}/releases/download/v${{ steps.bump_version.outputs.NEW_VERSION }}/vault.zip
+          ```
+          
+          ## Features
+          - ✅ Balance tracking
+          - ✅ Transaction history
+          - ✅ Admin-controlled transfers
+          - ✅ ICRC-1 integration
+          - ✅ Test mode support
+          
+          ## Compatibility
+          - Realms: >=0.1.0, <0.2.x
+          - Python: 3.10.7
+          
+          ## Commit
+          ${{ github.sha }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
