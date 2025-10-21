@@ -28,6 +28,17 @@ jobs:
     - name: Install dependencies
       run: |
         pip install -r requirements.txt
+        pip install black isort flake8
+        
+    - name: Run linters
+      run: |
+        echo "Running black..."
+        black backend tests --check
+        echo "Running isort..."
+        isort backend tests --check-only
+        echo "Running flake8..."
+        flake8 backend
+        flake8 tests --extend-ignore=F401,W291,F841
         
     - name: Run tests
       run: |

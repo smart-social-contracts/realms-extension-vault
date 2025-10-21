@@ -1,19 +1,5 @@
-from kybra import (
-    Async,
-    Opt,
-    Principal,
-    Record,
-    Service,
-    Variant,
-    Vec,
-    blob,
-    nat,
-    nat64,
-    null,
-    service_query,
-    service_update,
-    text,
-)
+from kybra import (Async, Opt, Principal, Record, Service, Variant, Vec, blob,
+                   nat, nat64, null, service_query, service_update, text)
 
 # Basic Data Records
 
