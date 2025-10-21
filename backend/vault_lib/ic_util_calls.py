@@ -4,8 +4,12 @@ from typing import List, Optional
 from kybra import Async, Principal, nat
 from kybra_simple_logging import get_logger
 
-from .candid_types import (Account, GetAccountTransactionsRequest,
-                           GetAccountTransactionsResponse, ICRCIndexer)
+from .candid_types import (
+    Account,
+    GetAccountTransactionsRequest,
+    GetAccountTransactionsResponse,
+    ICRCIndexer,
+)
 
 logger = get_logger(__name__)
 

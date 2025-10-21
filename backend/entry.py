@@ -81,8 +81,7 @@ def get_status(args: str) -> str:
     logger.info("vault.get_status called")
 
     try:
-        from .vault_lib.entities import (ApplicationData, Balance, Canisters,
-                                         app_data)
+        from .vault_lib.entities import ApplicationData, Balance, Canisters, app_data
 
         # Gather stats
         app = app_data()
@@ -184,8 +183,7 @@ def transfer(args: str) -> Async[str]:
         from kybra import Principal
 
         from .vault_lib.candid_types import Account, ICRCLedger, TransferArg
-        from .vault_lib.entities import (Balance, Canisters, VaultTransaction,
-                                         app_data)
+        from .vault_lib.entities import Balance, Canisters, VaultTransaction, app_data
 
         # Parse args
         params = json.loads(args) if isinstance(args, str) else args
@@ -273,8 +271,7 @@ def refresh(args: str) -> Async[str]:
     logger.info("vault.refresh called")
 
     try:
-        from .vault_lib.entities import (Balance, Canisters, VaultTransaction,
-                                         app_data)
+        from .vault_lib.entities import Balance, Canisters, VaultTransaction, app_data
         from .vault_lib.ic_util_calls import get_account_transactions
 
         app = app_data()
