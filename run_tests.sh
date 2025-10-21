@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Vault Extension Test Runner
-# Clones the realms framework, installs the vault extension, and runs tests
+# Runs tests inside the realms Docker container
 
 set -e  # Exit on error
 set -u  # Exit on undefined variable
@@ -25,47 +25,41 @@ log_warning() {
     echo -e "${YELLOW}[WARNING]${NC} $1"
 }
 
+# Docker image to use for realm deployment
+REALM_DOCKER_IMAGE="ghcr.io/smart-social-contracts/realms:c83b8ebaa99cc2bd112c11e52980b1a0e7097e3d@sha256:6edaf02262712e3b566a5f9aa8b4c3788dbbbdf651294c52349dfb2807e045ed"
+
 # Configuration
-REALMS_DIR=".realms"
-EXTENSION_ID="vault"
-CITIZENS_COUNT=5
-REALM_FOLDER="generated_realm"
+EXTENSION_NAME="vault"
+CONTAINER_NAME="vault-test-$(date +%s)"
+EXTENSION_ROOT_DIR="$(pwd)"
 
-log_info "Cleaning up previous realms installation..."
-rm -rf "${REALMS_DIR}"
+# Step 0: Pull the Docker image
+log_info "Pulling Docker image..."
+docker pull "$REALM_DOCKER_IMAGE"
 
-if [ ! -d "${REALMS_DIR}" ]; then
-    log_info "Cloning realms repository..."
-    git clone https://github.com/smart-social-contracts/realms.git "${REALMS_DIR}"
-    # Optionally checkout specific version
-    # log_warning "Using default branch. Uncomment below to use specific version:"
-    # git checkout v1.2.3  # or specific commit
-fi
+# Step 1: Clean up any existing containers
+log_info "Cleaning up existing containers..."
+docker rm -f $(docker ps -aq --filter "name=vault-test") 2>/dev/null || true
 
-cd "${REALMS_DIR}"
+# Step 2: Create and start Docker container
+log_info "Creating Docker container..."
 
-log_info "Installing realms CLI in development mode..."
-pipx install -e cli/
+docker run -d \
+    --name "$CONTAINER_NAME" \
+    -p 8001:8000 \
+    "$REALM_DOCKER_IMAGE" \
+    sleep infinity
 
-log_info "Packaging vault extension..."
-realms extension package --extension-id "${EXTENSION_ID}" --source-dir ..
+# Copy extension files to container
+log_info "Copying extension files to container..."
+docker cp "$EXTENSION_ROOT_DIR/." "$CONTAINER_NAME:/app/extension-root"
 
-log_info "Installing vault extension..."
-realms extension install --extension-id "${EXTENSION_ID}" --package-path "${EXTENSION_ID}.zip"
+# Run tests inside container
+log_info "Running tests inside container..."
+docker exec -it "$CONTAINER_NAME" bash /app/extension-root/test_entrypoint.sh
 
-log_info "Cleaning up previous realm..."
-rm -rf "${REALM_FOLDER}"
+# Clean up container after tests
+log_info "Cleaning up container..."
+docker rm -f "$CONTAINER_NAME" || true
 
-log_info "Creating test realm with ${CITIZENS_COUNT} citizens..."
-realms create --random --citizens "${CITIZENS_COUNT}"
-
-log_info "Deploying realm to ${REALM_FOLDER}..."
-realms deploy --folder "${REALM_FOLDER}"
-
-log_info "Running vault extension tests..."
-realms run ../tests/test_vault.py
-
-log_success "All tests completed successfully!"
-
-# TODO: Add e2e tests
-log_warning "E2E tests not yet implemented"
+log_success "Test run completed!"
