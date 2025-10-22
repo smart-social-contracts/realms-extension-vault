@@ -27,6 +27,6 @@ echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"
 
 echo '[INFO] Running vault extension tests...'
-realms run "${EXTENSION_DIR}/tests/test_vault.py"
+realms run --file "${EXTENSION_DIR}/tests/test_vault.py"
 
 echo '[SUCCESS] All tests completed successfully!'
