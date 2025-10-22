@@ -59,10 +59,11 @@ docker cp "$EXTENSION_ROOT_DIR/." "$CONTAINER_NAME:/app/extension-root"
 log_info "Running tests inside container..."
 docker exec -i "$CONTAINER_NAME" bash /app/extension-root/test_entrypoint.sh
 
-# Copy generated realm data from container to host for artifacts
-log_info "Copying generated realm data from container..."
-mkdir -p .realms
-docker cp "$CONTAINER_NAME:/app/generated_realm" ".realms/generated_realm" 2>/dev/null || log_warning "No generated realm data found in container"
+# Copy logs from container to host for artifacts
+log_info "Copying logs from container..."
+docker cp "$CONTAINER_NAME:/app/dfx.log" "dfx.log" 2>/dev/null || log_warning "No dfx.log found in container"
+docker cp "$CONTAINER_NAME:/app/dfx2.log" "dfx2.log" 2>/dev/null || log_warning "No dfx2.log found in container"
+docker cp "$CONTAINER_NAME:/app/realms_cli.log" "realms_cli.log" 2>/dev/null || log_warning "No realms_cli.log found in container"
 
 # Clean up container after tests
 log_info "Cleaning up container..."

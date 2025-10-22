@@ -49,5 +49,8 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-results
-        path: .realms/generated_realm/
+        path: |
+          dfx.log
+          dfx2.log
+          realms_cli.log
         if-no-files-found: ignore
