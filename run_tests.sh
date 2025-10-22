@@ -57,7 +57,7 @@ docker cp "$EXTENSION_ROOT_DIR/." "$CONTAINER_NAME:/app/extension-root"
 
 # Run tests inside container
 log_info "Running tests inside container..."
-docker exec -it "$CONTAINER_NAME" bash /app/extension-root/test_entrypoint.sh
+docker exec -i "$CONTAINER_NAME" bash /app/extension-root/test_entrypoint.sh
 
 # Clean up container after tests
 log_info "Cleaning up container..."
