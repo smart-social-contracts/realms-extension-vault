@@ -24,14 +24,18 @@ fi
 echo '[INFO] Cleaning up previous realms installation...'
 rm -rf "${REALM_FOLDER}"
 
-echo '[INFO] Packaging vault extension...'
-realms extension package --extension-id "${EXTENSION_ID}" --source-dir .. --package-path ${EXTENSION_ID}.zip #"${EXTENSION_DIR}" --
+# Install realms cli
+echo '[INFO] Installing realms cli...'
+pipx install -e cli/ --force
 
-echo '[INFO] Installing vault extension...'
-realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
+# echo '[INFO] Packaging vault extension...'
+# realms extension package --extension-id "${EXTENSION_ID}" --source-dir .. --package-path ${EXTENSION_ID}.zip #"${EXTENSION_DIR}" --
+
+# echo '[INFO] Installing vault extension...'
+# realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
 
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
-realms create --random --citizens "${CITIZENS_COUNT}"
+realms create --random #--citizens "${CITIZENS_COUNT}"
 
 echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"
