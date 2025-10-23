@@ -37,7 +37,7 @@ rm -rf "${REALM_FOLDER}"
 
 # Install realms cli
 echo '[INFO] Installing realms cli...'
-pipx install -e cli/ --force
+pip install -e cli/ --force
 
 # DO NOT USE THIS APPROACH
 # echo '[INFO] Packaging vault extension...'
