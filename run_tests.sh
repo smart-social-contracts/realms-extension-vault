@@ -26,7 +26,7 @@ log_warning() {
 }
 
 # Docker image to use for realm deployment
-REALM_DOCKER_IMAGE="ghcr.io/smart-social-contracts/realms:c83b8ebaa99cc2bd112c11e52980b1a0e7097e3d@sha256:6edaf02262712e3b566a5f9aa8b4c3788dbbbdf651294c52349dfb2807e045ed"
+REALM_DOCKER_IMAGE="ghcr.io/smart-social-contracts/realms:25f2eb40b474505a69c0415a8b46c951bf2c2645"
 
 # Configuration
 EXTENSION_NAME="vault"
