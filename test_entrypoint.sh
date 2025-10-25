@@ -51,10 +51,48 @@ realms extension install-from-source --source-dir "${EXTENSION_SOURCE_DIR}"
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
 realms create --random #--citizens "${CITIZENS_COUNT}"
 
+# Deploy test canisters BEFORE realm deployment
+echo '[INFO] Deploying test canisters (ckBTC ledger and indexer)...'
+cd "${REALM_FOLDER}"
+if [ -f /.dockerenv ]; then
+    # In Docker environment
+    bash /app/extension-root/tests/deploy_test_canisters.sh
+else
+    # In local environment
+    bash ../tests/deploy_test_canisters.sh
+fi
+
+# Capture the canister IDs
+CKBTC_LEDGER_ID=$(dfx canister id ckbtc_ledger)
+CKBTC_INDEXER_ID=$(dfx canister id ckbtc_indexer)
+echo "[INFO] ckBTC Ledger ID: ${CKBTC_LEDGER_ID}"
+echo "[INFO] ckBTC Indexer ID: ${CKBTC_INDEXER_ID}"
+cd ..
+
 echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"
 
+# Configure vault extension with local test canister IDs
+echo '[INFO] Configuring vault with local test canister IDs...'
+if [ -f /.dockerenv ]; then
+    # In Docker environment
+    INIT_SCRIPT_SOURCE="/app/extension-root/tests/init_vault_canisters.py"
+    INIT_SCRIPT_TEMP="/tmp/init_vault_canisters_configured.py"
+else
+    # In local environment  
+    INIT_SCRIPT_SOURCE="../tests/init_vault_canisters.py"
+    INIT_SCRIPT_TEMP="/tmp/init_vault_canisters_configured.py"
+fi
+
+# Create a copy of the init script with actual canister IDs injected
+sed -e "s/PLACEHOLDER_LEDGER_ID/${CKBTC_LEDGER_ID}/" \
+    -e "s/PLACEHOLDER_INDEXER_ID/${CKBTC_INDEXER_ID}/" \
+    "${INIT_SCRIPT_SOURCE}" > "${INIT_SCRIPT_TEMP}"
+
+# Run the initialization script with injected canister IDs
+realms run --file "${INIT_SCRIPT_TEMP}" --wait
+
 echo '[INFO] Running vault extension tests...'
-realms run --file "${TEST_FILE}"
+realms run --file "${TEST_FILE}" --wait
 
 echo '[SUCCESS] All tests completed successfully!'

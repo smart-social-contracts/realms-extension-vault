@@ -32,8 +32,10 @@ def async_task():
         # ic.print("Sending... step 2/3")
         # yield treasury.send(ic.id().to_str(), 1)
 
-        ic.print("Refreshing... step 3/3")
-        yield treasury.refresh()
+        # ic.print("Refreshing... step 3/3")
+        ret = yield treasury.refresh()
+
+        ic.print("ret: ", ret)
 
         ic.print("✅ Task completed successfully!")
         return {"success": True, "treasury": treasury.name}
