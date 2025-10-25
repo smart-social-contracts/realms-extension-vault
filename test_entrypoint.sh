@@ -51,28 +51,48 @@ realms extension install-from-source --source-dir "${EXTENSION_SOURCE_DIR}"
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
 realms create --random #--citizens "${CITIZENS_COUNT}"
 
-# Deploy test canisters BEFORE realm deployment
-echo '[INFO] Deploying test canisters (ckBTC ledger and indexer)...'
-cd "${REALM_FOLDER}"
+# # Stop previous dfx instances and clean up
+# echo '[INFO] Stopping previous dfx instances...'
+# if [ -f /.dockerenv ]; then
+#     bash /app/extension-root/clean_dfx.sh || true
+# else
+#     bash ../clean_dfx.sh || true
+# fi
+
+# Unify dfx.json files - merge test canisters into .realms/dfx.json
+echo '[INFO] Unifying dfx.json configuration...'
+# Don't cd into REALM_FOLDER - the dfx.json is in .realms/ not in generated_realm/
+
+# Merge test canisters into unified dfx.json
 if [ -f /.dockerenv ]; then
-    # In Docker environment
-    bash /app/extension-root/tests/deploy_test_canisters.sh
+    python3 /app/extension-root/tests/merge_dfx_json.py /app/extension-root/tests/dfx.json dfx.json
 else
-    # In local environment
-    cd ../../tests
-    bash deploy_test_canisters.sh
+    # Merge into .realms/dfx.json (we're already in .realms/ directory)
+    python3 ../tests/merge_dfx_json.py ../tests/dfx.json dfx.json
 fi
 
-# Capture the canister IDs
+# # Start dfx from .realms directory with unified configuration
+# echo '[INFO] Starting dfx with unified configuration...'
+# dfx start --clean --background
+# sleep 3  # Give dfx time to start
+
+echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
+realms deploy --folder "${REALM_FOLDER}"
+
+# Deploy test canisters from unified dfx.json
+echo '[INFO] Deploying test canisters (ckBTC ledger and indexer)...'
+if [ -f /.dockerenv ]; then
+    bash /app/extension-root/tests/deploy_test_canisters.sh
+else
+    bash ../tests/deploy_test_canisters.sh
+fi
+
+# Capture the canister IDs AFTER deployment
 CKBTC_LEDGER_ID=$(dfx canister id ckbtc_ledger)
 CKBTC_INDEXER_ID=$(dfx canister id ckbtc_indexer)
 echo "[INFO] ckBTC Ledger ID: ${CKBTC_LEDGER_ID}"
 echo "[INFO] ckBTC Indexer ID: ${CKBTC_INDEXER_ID}"
 
-cd ../.realms
-
-echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
-realms deploy --folder "${REALM_FOLDER}"
 
 # Configure vault extension with local test canister IDs
 echo '[INFO] Configuring vault with local test canister IDs...'
