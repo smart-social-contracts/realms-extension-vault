@@ -46,13 +46,13 @@ def get_canister_id(canister_name: str) -> str:
 
 def create_canisters():
     """Create all canisters defined in dfx.json."""
-    print("\n[1/7] Creating canisters...")
+    print("\n[1/8] Creating canisters...")
     run_command(["dfx", "canister", "create", "--all", "--no-wallet"], capture_output=False)
 
 
 def deploy_ledger(principal: str) -> str:
     """Deploy the ckBTC ledger canister with initial balance."""
-    print("\n[2/7] Deploying ckbtc_ledger...")
+    print("\n[2/8] Deploying ckbtc_ledger...")
     
     # Build the init argument
     init_arg = (
@@ -75,7 +75,7 @@ def deploy_ledger(principal: str) -> str:
         f"--argument={init_arg}"
     ], capture_output=False)
     
-    print("\n[3/7] Getting ledger canister ID...")
+    print("\n[3/8] Getting ledger canister ID...")
     ledger_id = get_canister_id("ckbtc_ledger")
     print(f"Ledger canister ID: {ledger_id}")
     return ledger_id
@@ -83,7 +83,7 @@ def deploy_ledger(principal: str) -> str:
 
 def deploy_indexer(ledger_id: str) -> str:
     """Deploy the ckBTC indexer canister."""
-    print("\n[4/7] Deploying ckbtc_indexer with ledger reference...")
+    print("\n[4/8] Deploying ckbtc_indexer with ledger reference...")
     
     init_arg = (
         f'(opt variant {{ Init = record {{ '
@@ -109,7 +109,7 @@ def deploy_indexer(ledger_id: str) -> str:
 
 def send_tokens(ledger_id: str, to_principal: str, amount: int) -> int:
     """Send tokens from current identity to a principal."""
-    print(f"\n[6/7] Sending {amount:,} ckBTC tokens to realm_backend...")
+    print(f"\n[6/8] Sending {amount:,} ckBTC tokens to realm_backend...")
     
     transfer_arg = (
         f'(record {{'
@@ -127,20 +127,29 @@ def send_tokens(ledger_id: str, to_principal: str, amount: int) -> int:
     
     result = run_command([
         "dfx", "canister", "call",
+        "--output", "json",
         ledger_id, "icrc1_transfer",
         transfer_arg
     ])
     
-    # Parse the result to get transaction ID
-    output = result.stdout.strip()
-    print(f"Transfer result: {output}")
-    
-    # Extract transaction ID from variant { Ok = N : nat }
-    if "Ok" in output:
-        tx_id = int(output.split("=")[1].split(":")[0].strip())
-        return tx_id
-    else:
-        print(f"❌ Transfer failed: {output}")
+    # Parse JSON response
+    try:
+        response_data = json.loads(result.stdout)
+        
+        if "Ok" in response_data:
+            tx_id = int(response_data["Ok"])
+            print(f"✅ Transfer successful")
+            print(f"   Transaction ID: {tx_id}")
+            print(f"   Amount: {amount:,} ckBTC")
+            return tx_id
+        else:
+            error = response_data.get("Err", "Unknown error")
+            print(f"❌ Transfer failed: {json.dumps(error, indent=2)}")
+            sys.exit(1)
+            
+    except json.JSONDecodeError as e:
+        print(f"❌ Failed to parse transfer response: {e}")
+        print(f"Raw output: {result.stdout}")
         sys.exit(1)
 
 
@@ -155,19 +164,27 @@ def verify_balance(ledger_id: str, principal: str) -> int:
     
     result = run_command([
         "dfx", "canister", "call",
+        "--output", "json",
         ledger_id, "icrc1_balance_of",
         balance_arg
     ])
     
-    # Parse balance from output like "(100_000 : nat)"
-    output = result.stdout.strip()
-    balance = int(output.replace("(", "").replace(")", "").replace("_", "").replace(":", "").split()[0])
-    return balance
+    # Parse JSON response
+    try:
+        # Response is just a number in JSON format
+        balance_str = result.stdout.strip().strip('"')
+        # Remove underscores used as thousands separator
+        balance = int(balance_str.replace("_", ""))
+        return balance
+    except (ValueError, json.JSONDecodeError) as e:
+        print(f"❌ Failed to parse balance: {e}")
+        print(f"Raw output: {result.stdout}")
+        sys.exit(1)
 
 
-def check_indexer_transactions(indexer_id: str, principal: str):
-    """Query indexer for account transactions."""
-    print("\n[7/7] Verifying balance and checking indexer...")
+def check_indexer_transactions(indexer_id: str, principal: str) -> dict:
+    """Query indexer for account transactions and return as JSON."""
+    print("\n[8/8] Checking indexer transactions...")
     
     query_arg = (
         f'(record {{'
@@ -182,12 +199,39 @@ def check_indexer_transactions(indexer_id: str, principal: str):
     
     result = run_command([
         "dfx", "canister", "call",
+        "--output", "json",
         indexer_id, "get_account_transactions",
         query_arg
     ])
     
-    print("\nIndexer transactions:")
-    print(result.stdout)
+    # Parse the JSON response
+    try:
+        response_data = json.loads(result.stdout)
+        
+        # Extract the Ok variant data
+        if "Ok" in response_data:
+            tx_data = response_data["Ok"]
+            
+            balance = int(tx_data.get('balance', 0))
+            oldest_tx_id = tx_data.get('oldest_tx_id')
+            
+            print(f"\n✅ Indexer Response:")
+            print(f"   Balance: {balance:,} ckBTC")
+            print(f"   Transactions: {len(tx_data.get('transactions', []))}")
+            print(f"   Oldest TX ID: {oldest_tx_id if oldest_tx_id else 'None'}")
+            
+            print(f"\n📋 Transactions (JSON):")
+            print(json.dumps(tx_data, indent=2))
+            
+            return tx_data
+        else:
+            print(f"⚠️  Unexpected response format: {response_data}")
+            return {}
+            
+    except json.JSONDecodeError as e:
+        print(f"❌ Failed to parse JSON response: {e}")
+        print(f"Raw output: {result.stdout}")
+        return {}
 
 
 def main():
@@ -208,7 +252,7 @@ def main():
     indexer_id = deploy_indexer(ledger_id)
     
     # Step 5: Get realm_backend canister ID
-    print("\n[5/7] Getting realm_backend canister ID...")
+    print("\n[5/8] Getting realm_backend canister ID...")
     try:
         realm_backend_id = get_canister_id("realm_backend")
         print(f"Realm backend canister ID: {realm_backend_id}")
@@ -221,16 +265,23 @@ def main():
     tx_id = send_tokens(ledger_id, realm_backend_id, 100_000)
     
     # Step 7: Verify
+    print("\n[7/8] Verifying ledger balance...")
     balance = verify_balance(ledger_id, realm_backend_id)
-    print(f"Realm backend balance: {balance:,} ckBTC")
+    print(f"✅ Balance verified: {balance:,} ckBTC")
     
-    check_indexer_transactions(indexer_id, realm_backend_id)
+    # Step 8: Check indexer
+    tx_data = check_indexer_transactions(indexer_id, realm_backend_id)
     
-    print("\n🎉 Test setup complete!")
-    print(f"  - Tokens sent to realm_backend: 100,000 ckBTC")
-    print(f"  - Transaction ID: {tx_id}")
-    print(f"  - Current balance: {balance:,} ckBTC")
-    print(f"  - Transaction indexed and verified")
+    print("\n" + "="*60)
+    print("🎉 Test Setup Complete!")
+    print("="*60)
+    print(f"📊 Summary:")
+    print(f"  • Tokens sent: 100,000 ckBTC")
+    print(f"  • Transaction ID: {tx_id}")
+    print(f"  • Current balance: {balance:,} ckBTC")
+    print(f"  • Total transactions: {len(tx_data.get('transactions', []))}")
+    print(f"  • All data available in JSON format")
+    print("="*60)
 
 
 if __name__ == "__main__":
