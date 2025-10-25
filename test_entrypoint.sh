@@ -71,10 +71,6 @@ else
     python3 ../tests/merge_dfx_json.py ../tests/dfx.json dfx.json
 fi
 
-# Start dfx from .realms directory with unified configuration
-echo '[INFO] Starting dfx with unified configuration...'
-dfx start --clean --background
-sleep 3  # Give dfx time to start
 
 echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"
