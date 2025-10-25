@@ -51,13 +51,13 @@ realms extension install-from-source --source-dir "${EXTENSION_SOURCE_DIR}"
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
 realms create --random #--citizens "${CITIZENS_COUNT}"
 
-# # Stop previous dfx instances and clean up
-# echo '[INFO] Stopping previous dfx instances...'
-# if [ -f /.dockerenv ]; then
-#     bash /app/extension-root/clean_dfx.sh || true
-# else
-#     bash ../clean_dfx.sh || true
-# fi
+# Stop previous dfx instances and clean up
+echo '[INFO] Stopping previous dfx instances...'
+if [ -f /.dockerenv ]; then
+    bash /app/extension-root/clean_dfx.sh || true
+else
+    bash ../clean_dfx.sh || true
+fi
 
 # Unify dfx.json files - merge test canisters into .realms/dfx.json
 echo '[INFO] Unifying dfx.json configuration...'
@@ -71,10 +71,10 @@ else
     python3 ../tests/merge_dfx_json.py ../tests/dfx.json dfx.json
 fi
 
-# # Start dfx from .realms directory with unified configuration
-# echo '[INFO] Starting dfx with unified configuration...'
-# dfx start --clean --background
-# sleep 3  # Give dfx time to start
+# Start dfx from .realms directory with unified configuration
+echo '[INFO] Starting dfx with unified configuration...'
+dfx start --clean --background
+sleep 3  # Give dfx time to start
 
 echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"

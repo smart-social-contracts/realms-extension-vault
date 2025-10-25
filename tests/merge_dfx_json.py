@@ -68,6 +68,7 @@ def merge_dfx_json(test_dfx_path: str, realm_dfx_path: str) -> bool:
         print("\n✅ dfx.json files unified successfully")
     else:
         print("\nℹ️  No changes needed - test canisters already in dfx.json")
+        return True
     
     return changes_made
 
