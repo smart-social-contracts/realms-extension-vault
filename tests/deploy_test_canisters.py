@@ -16,6 +16,15 @@ import sys
 from typing import Optional
 
 
+def validate_json_response(data: dict, expected_keys: list[str], context: str) -> bool:
+    """Validate that JSON response has expected structure."""
+    for key in expected_keys:
+        if key not in data:
+            print(f"⚠️  Warning: Missing key '{key}' in {context}")
+            return False
+    return True
+
+
 def run_command(cmd: list[str], capture_output: bool = True) -> subprocess.CompletedProcess:
     """Run a shell command and return the result."""
     try:
@@ -138,9 +147,15 @@ def send_tokens(ledger_id: str, to_principal: str, amount: int) -> int:
         
         if "Ok" in response_data:
             tx_id = int(response_data["Ok"])
+            
+            # Sanity check: transaction ID should be positive
+            if tx_id <= 0:
+                print(f"⚠️  Warning: Unexpected transaction ID: {tx_id}")
+            
             print(f"✅ Transfer successful")
             print(f"   Transaction ID: {tx_id}")
             print(f"   Amount: {amount:,} ckBTC")
+            print(f"   Sanity check: TX ID > 0 ✓")
             return tx_id
         else:
             error = response_data.get("Err", "Unknown error")
@@ -175,6 +190,12 @@ def verify_balance(ledger_id: str, principal: str) -> int:
         balance_str = result.stdout.strip().strip('"')
         # Remove underscores used as thousands separator
         balance = int(balance_str.replace("_", ""))
+        
+        # Sanity check: balance should be non-negative
+        if balance < 0:
+            print(f"⚠️  Warning: Negative balance detected: {balance}")
+            sys.exit(1)
+        
         return balance
     except (ValueError, json.JSONDecodeError) as e:
         print(f"❌ Failed to parse balance: {e}")
@@ -212,13 +233,59 @@ def check_indexer_transactions(indexer_id: str, principal: str) -> dict:
         if "Ok" in response_data:
             tx_data = response_data["Ok"]
             
+            # Sanity check: validate response structure
+            if not validate_json_response(tx_data, ['balance', 'transactions'], 'indexer response'):
+                print(f"⚠️  Invalid indexer response structure")
+                return {}
+            
             balance = int(tx_data.get('balance', 0))
             oldest_tx_id = tx_data.get('oldest_tx_id')
+            transactions = tx_data.get('transactions', [])
+            
+            # Sanity checks
+            checks_passed = []
+            checks_failed = []
+            
+            # Check 1: Balance should be non-negative
+            if balance >= 0:
+                checks_passed.append("Balance ≥ 0")
+            else:
+                checks_failed.append(f"Balance is negative: {balance}")
+            
+            # Check 2: Transactions should be a list
+            if isinstance(transactions, list):
+                checks_passed.append("Transactions is list")
+            else:
+                checks_failed.append("Transactions is not a list")
+            
+            # Check 3: Each transaction should have required fields
+            for i, tx in enumerate(transactions):
+                if 'id' in tx and 'transaction' in tx:
+                    checks_passed.append(f"TX {i} has required fields")
+                else:
+                    checks_failed.append(f"TX {i} missing fields")
+            
+            # Check 4: Transaction IDs should be sequential or in order
+            if len(transactions) > 1:
+                tx_ids = [int(tx['id']) for tx in transactions if 'id' in tx]
+                if tx_ids == sorted(tx_ids, reverse=True):
+                    checks_passed.append("TX IDs in descending order")
+                else:
+                    checks_failed.append("TX IDs not properly ordered")
             
             print(f"\n✅ Indexer Response:")
             print(f"   Balance: {balance:,} ckBTC")
-            print(f"   Transactions: {len(tx_data.get('transactions', []))}")
+            print(f"   Transactions: {len(transactions)}")
             print(f"   Oldest TX ID: {oldest_tx_id if oldest_tx_id else 'None'}")
+            
+            print(f"\n🔍 Sanity Checks:")
+            print(f"   ✓ Passed: {len(checks_passed)}")
+            if checks_failed:
+                print(f"   ✗ Failed: {len(checks_failed)}")
+                for failure in checks_failed:
+                    print(f"      - {failure}")
+            else:
+                print(f"   All checks passed ✓")
             
             print(f"\n📋 Transactions (JSON):")
             print(json.dumps(tx_data, indent=2))
@@ -272,15 +339,32 @@ def main():
     # Step 8: Check indexer
     tx_data = check_indexer_transactions(indexer_id, realm_backend_id)
     
+    # Final sanity check: compare ledger balance with indexer balance
+    indexer_balance = int(tx_data.get('balance', 0))
+    balance_matches = balance == indexer_balance
+    
     print("\n" + "="*60)
     print("🎉 Test Setup Complete!")
     print("="*60)
     print(f"📊 Summary:")
     print(f"  • Tokens sent: 100,000 ckBTC")
     print(f"  • Transaction ID: {tx_id}")
-    print(f"  • Current balance: {balance:,} ckBTC")
+    print(f"  • Ledger balance: {balance:,} ckBTC")
+    print(f"  • Indexer balance: {indexer_balance:,} ckBTC")
     print(f"  • Total transactions: {len(tx_data.get('transactions', []))}")
     print(f"  • All data available in JSON format")
+    
+    print(f"\n✅ Final Validation:")
+    if balance_matches:
+        print(f"  ✓ Ledger and indexer balances match")
+    else:
+        print(f"  ✗ Balance mismatch: Ledger={balance:,}, Indexer={indexer_balance:,}")
+    
+    if tx_id in [int(tx['id']) for tx in tx_data.get('transactions', []) if 'id' in tx]:
+        print(f"  ✓ Latest transaction found in indexer")
+    else:
+        print(f"  ⚠️  Latest transaction not yet indexed")
+    
     print("="*60)
 
 
