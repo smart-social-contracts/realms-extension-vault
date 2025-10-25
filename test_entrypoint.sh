@@ -78,9 +78,9 @@ realms deploy --folder "${REALM_FOLDER}"
 # Deploy test canisters from unified dfx.json
 echo '[INFO] Deploying test canisters (ckBTC ledger and indexer)...'
 if [ -f /.dockerenv ]; then
-    bash /app/extension-root/tests/deploy_test_canisters.sh
+    python3 /app/extension-root/tests/deploy_test_canisters.py
 else
-    bash ../tests/deploy_test_canisters.sh
+    python3 ../tests/deploy_test_canisters.py
 fi
 
 # Capture the canister IDs AFTER deployment
