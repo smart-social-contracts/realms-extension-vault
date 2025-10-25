@@ -59,7 +59,8 @@ if [ -f /.dockerenv ]; then
     bash /app/extension-root/tests/deploy_test_canisters.sh
 else
     # In local environment
-    bash ../tests/deploy_test_canisters.sh
+    cd ../../tests
+    bash deploy_test_canisters.sh
 fi
 
 # Capture the canister IDs
@@ -67,7 +68,8 @@ CKBTC_LEDGER_ID=$(dfx canister id ckbtc_ledger)
 CKBTC_INDEXER_ID=$(dfx canister id ckbtc_indexer)
 echo "[INFO] ckBTC Ledger ID: ${CKBTC_LEDGER_ID}"
 echo "[INFO] ckBTC Indexer ID: ${CKBTC_INDEXER_ID}"
-cd ..
+
+cd ../.realms
 
 echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"
@@ -90,7 +92,7 @@ sed -e "s/PLACEHOLDER_LEDGER_ID/${CKBTC_LEDGER_ID}/" \
     "${INIT_SCRIPT_SOURCE}" > "${INIT_SCRIPT_TEMP}"
 
 # Run the initialization script with injected canister IDs
-realms run --file "${INIT_SCRIPT_TEMP}" --wait
+realms run --file "${INIT_SCRIPT_TEMP}"
 
 echo '[INFO] Running vault extension tests...'
 realms run --file "${TEST_FILE}" --wait

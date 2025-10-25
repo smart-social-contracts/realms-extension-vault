@@ -7,11 +7,11 @@ echo "=== Deploying Test Canisters ==="
 PRINCIPAL=$(dfx identity get-principal)
 echo "Using principal: $PRINCIPAL"
 
-# Clean up old canister IDs if they exist (handles dfx start --clean scenarios)
-echo ""
-echo "[0/4] Cleaning up stale canister IDs..."
-rm -f .dfx/local/canister_ids.json
-rm -f canister_ids.json
+# # Clean up old canister IDs if they exist (handles dfx start --clean scenarios)
+# echo ""
+# echo "[0/4] Cleaning up stale canister IDs..."
+# rm -f .dfx/local/canister_ids.json
+# rm -f canister_ids.json
 
 # Step 1: Create canisters
 echo ""
