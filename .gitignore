@@ -31,6 +31,7 @@ env/
 htmlcov/
 *.cover
 .hypothesis/
+test-logs/
 
 # IDEs
 .vscode/

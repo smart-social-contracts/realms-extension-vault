@@ -55,18 +55,38 @@ docker run -d \
 log_info "Copying extension files to container..."
 docker cp "$EXTENSION_ROOT_DIR/." "$CONTAINER_NAME:/app/extension-root"
 
-# Run tests inside container
+# Run tests inside container and collect logs
 log_info "Running tests inside container..."
+set +e  # Don't exit on test failure - we want to collect logs either way
 docker exec -i "$CONTAINER_NAME" bash /app/extension-root/test_entrypoint.sh
+EXIT_CODE=$?
+set -e
 
-# Copy logs from container to host for artifacts
-log_info "Copying logs from container..."
-docker cp "$CONTAINER_NAME:/app/dfx.log" "dfx.log" 2>/dev/null || log_warning "No dfx.log found in container"
-docker cp "$CONTAINER_NAME:/app/dfx2.log" "dfx2.log" 2>/dev/null || log_warning "No dfx2.log found in container"
-docker cp "$CONTAINER_NAME:/app/realms_cli.log" "realms_cli.log" 2>/dev/null || log_warning "No realms_cli.log found in container"
+# Collect all logs from inside the container
+log_info "Collecting logs from container..."
+docker exec "$CONTAINER_NAME" bash -c "
+    mkdir -p /app/test-logs && \
+    cp -f /app/dfx.log /app/test-logs/ 2>/dev/null || true && \
+    cp -f /app/dfx2.log /app/test-logs/ 2>/dev/null || true && \
+    cp -f /app/realms_cli.log /app/test-logs/ 2>/dev/null || true && \
+    cp -f /tmp/deploy.log /app/test-logs/ 2>/dev/null || true && \
+    cp -f /app/generated_realm/.dfx/network/local/dfx.log /app/test-logs/realm_dfx.log 2>/dev/null || true && \
+    ls -lah /app/test-logs/ || true
+"
+
+# Copy the entire test-logs directory from container to host
+log_info "Copying test logs to host..."
+docker cp "$CONTAINER_NAME:/app/test-logs" "./test-logs" 2>/dev/null || log_warning "No test-logs directory found in container"
 
 # Clean up container after tests
 log_info "Cleaning up container..."
 docker rm -f "$CONTAINER_NAME" || true
 
-log_success "Test run completed!"
+if [ $EXIT_CODE -eq 0 ]; then
+    log_success "Test run completed successfully!"
+else
+    echo -e "${YELLOW}[WARNING]${NC} Tests failed with exit code $EXIT_CODE"
+    echo -e "${BLUE}[INFO]${NC} Check test-logs/ directory for detailed logs"
+fi
+
+exit $EXIT_CODE

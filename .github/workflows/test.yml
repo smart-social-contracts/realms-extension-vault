@@ -44,13 +44,11 @@ jobs:
       run: |
         bash run_tests.sh
         
-    - name: Upload test results
+    - name: Upload test logs
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: test-results
-        path: |
-          dfx.log
-          dfx2.log
-          realms_cli.log
-        if-no-files-found: ignore
+        name: test-logs
+        path: test-logs/
+        retention-days: 7
+        if-no-files-found: warn
