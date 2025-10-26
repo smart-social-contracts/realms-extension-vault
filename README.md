@@ -61,3 +61,4 @@ git tag v0.1.0 && gh release create v0.1.0 vault-0.1.0.zip  # Release
 ---
 
 MIT License • [Issues](https://github.com/smart-social-contracts/realms-extension-vault/issues) • [Docs](https://docs.realms.org)
+
