@@ -209,15 +209,15 @@ def get_account_transactions(
             and "Ok" in result.Ok
         ):
             data = result.Ok["Ok"]
-            
+
             # Convert balance to int if it's a string
             balance = data.get("balance", 0)
             if isinstance(balance, str):
                 balance = int(balance.replace("_", ""))
-            
+
             logger.info(f"Parsed balance: {balance}")
             logger.info(f"Transactions count: {len(data.get('transactions', []))}")
-            
+
             return GetAccountTransactionsResponse(
                 balance=balance,
                 transactions=data.get("transactions", []),

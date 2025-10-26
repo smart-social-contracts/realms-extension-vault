@@ -9,12 +9,11 @@ import json
 import traceback
 from typing import Any, Dict
 
-from kybra import Async, ic, Principal
+from kybra import Async, Principal, ic
 from kybra_simple_logging import get_logger
 
-from .vault_lib.entities import app_data, Canisters, Balance
 from .vault_lib.constants import CANISTER_PRINCIPALS, MAX_ITERATION_COUNT, MAX_RESULTS
-
+from .vault_lib.entities import Balance, Canisters, app_data
 
 logger = get_logger("extensions.vault")
 
@@ -22,8 +21,9 @@ logger = get_logger("extensions.vault")
 def register_entities():
     """Register vault entity types with the Database."""
     from kybra_simple_db import Database
+
     from .vault_lib import entities as vault_entities
-    
+
     logger.info("Registering vault entity types...")
     vault_entity_types = [
         vault_entities.ApplicationData,
@@ -33,7 +33,7 @@ def register_entities():
         vault_entities.VaultTransaction,
         vault_entities.Balance,
     ]
-    
+
     for entity_type in vault_entity_types:
         try:
             logger.info(f"Registering vault entity type {entity_type.__name__}")
@@ -42,7 +42,7 @@ def register_entities():
             logger.error(
                 f"Error registering vault entity type {entity_type.__name__}: {str(e)}\n{traceback.format_exc()}"
             )
-    
+
     logger.info("✅ Vault entity types registered")
 
 
@@ -101,7 +101,6 @@ def initialize(args: str):
     logger.info("Vault initialized.")
 
 
-
 def set_canister(args: str) -> str:
     """
     Set or update the principal ID for a specific canister in the Canisters entity.
@@ -109,7 +108,7 @@ def set_canister(args: str) -> str:
     Args:
         args: JSON string with {"canister_name": "xxx", "principal_id": "yyy"}
               canister_name examples: "ckBTC ledger", "ckBTC indexer"
-              
+
     Returns:
         JSON string with success status
     """
@@ -122,10 +121,12 @@ def set_canister(args: str) -> str:
         principal_id = params.get("principal_id")
 
         if not canister_name or not principal_id:
-            return json.dumps({
-                "success": False,
-                "error": "canister_name and principal_id are required"
-            })
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": "canister_name and principal_id are required",
+                }
+            )
 
         logger.info(f"Setting canister '{canister_name}' to principal: {principal_id}")
 
@@ -141,26 +142,21 @@ def set_canister(args: str) -> str:
             # Create a new canister record
             Canisters(_id=canister_name, principal=principal_id)
             logger.info(f"Created new canister '{canister_name}' with principal.")
-        
-        return json.dumps({
-            "success": True,
-            "data": {
-                "canister_name": canister_name,
-                "principal_id": principal_id
-            }
-        })
-        
-    except Exception as e:
-        logger.error(
-            f"Error setting canister: {str(e)}\n{traceback.format_exc()}"
-        )
-        return json.dumps({"success": False, "error": str(e)})
 
+        return json.dumps(
+            {
+                "success": True,
+                "data": {"canister_name": canister_name, "principal_id": principal_id},
+            }
+        )
+
+    except Exception as e:
+        logger.error(f"Error setting canister: {str(e)}\n{traceback.format_exc()}")
+        return json.dumps({"success": False, "error": str(e)})
 
 
 def convert_principals_to_strings(obj):
     """Recursively convert Principal objects to strings for JSON serialization"""
-    from kybra import Principal
 
     if isinstance(obj, Principal):
         return obj.to_str()
@@ -323,8 +319,6 @@ def transfer(args: str) -> Async[str]:
     logger.info(f"vault.transfer called with args: {args}")
 
     try:
-        from kybra import Principal
-
         from .vault_lib.candid_types import Account, ICRCLedger, TransferArg
         from .vault_lib.entities import Balance, Canisters, VaultTransaction, app_data
 
