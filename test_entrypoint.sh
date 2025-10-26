@@ -21,7 +21,9 @@ else
     # Clone realms repo if not already present
     if [ ! -d ".realms" ]; then
         echo '[INFO] Cloning realms repository...'
-        git clone https://github.com/smart-social-contracts/realms.git .realms
+        # TODO: using SSH instead of HTTPS for now 
+        # git clone https://github.com/smart-social-contracts/realms.git .realms
+        git clone git@github.com:smart-social-contracts/realms.git .realms
     fi
     cd .realms
     # Create a temp directory with proper structure for local dev
