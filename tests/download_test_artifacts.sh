@@ -2,9 +2,12 @@
 set -e
 set -x
 
-LEDGER_SUITE_DIR="tests/artifacts/ledger_suite_icrc"
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+LEDGER_SUITE_DIR="${SCRIPT_DIR}/artifacts/ledger_suite_icrc"
 LEDGER_SUITE_URL="https://github.com/dfinity/ic/releases/download/ledger-suite-icrc-2025-02-27"
-mkdir -p $LEDGER_SUITE_DIR
+mkdir -p "$LEDGER_SUITE_DIR"
 
 # Download the ledger files if they don't exist
 if [ ! -f "$LEDGER_SUITE_DIR/ledger.wasm" ]; then

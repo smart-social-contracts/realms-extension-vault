@@ -9,8 +9,11 @@ CITIZENS_COUNT=5
 REALM_FOLDER="generated_realm"
 EXTENSION_DIR="extension-root"
 
+# Get the directory where this script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # Download test artifacts
-tests/download_test_artifacts.sh
+"${SCRIPT_DIR}/tests/download_test_artifacts.sh"
 
 # Run from home directory where realms framework lives (if in Docker)
 if [ -f /.dockerenv ]; then
@@ -18,6 +21,8 @@ if [ -f /.dockerenv ]; then
     # In Docker, create a temp directory with proper structure
     mkdir -p /tmp/extensions/vault
     cp -r extension-root/* /tmp/extensions/vault/
+    # Don't copy the .realms directory if it exists (causes conflicts)
+    rm -rf /tmp/extensions/vault/.realms
     EXTENSION_SOURCE_DIR="/tmp/extensions"
     TEST_FILE="extension-root/tests/test_vault.py"
 else
@@ -50,11 +55,21 @@ pip install -e cli/ --force
 # echo '[INFO] Installing vault extension...'
 # realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
 
-echo '[INFO] Installing vault extension from source...'
-realms extension install-from-source --source-dir "${EXTENSION_SOURCE_DIR}"
-
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
 realms create --random #--citizens "${CITIZENS_COUNT}"
+
+echo '[INFO] Removing old vault extension files...'
+rm -rf src/realm_backend/extension_packages/vault || true
+
+echo '[INFO] Manually copying custom vault extension...'
+cp -r "${EXTENSION_SOURCE_DIR}/vault/backend" src/realm_backend/extension_packages/vault
+cp "${EXTENSION_SOURCE_DIR}/vault/manifest.json" src/realm_backend/extension_packages/vault/
+
+echo '[INFO] Updating extension imports...'
+# Make sure vault is in the imports (it should already be there)
+if ! grep -q "import extension_packages.vault.entry" src/realm_backend/extension_packages/extension_imports.py; then
+    echo "import extension_packages.vault.entry" >> src/realm_backend/extension_packages/extension_imports.py
+fi
 
 # Stop previous dfx instances and clean up
 echo '[INFO] Stopping previous dfx instances...'
@@ -75,7 +90,6 @@ else
     # Merge into .realms/dfx.json (we're already in .realms/ directory)
     python3 ../tests/merge_dfx_json.py ../tests/dfx.json dfx.json
 fi
-
 
 echo '[INFO] Deploying realm to ${REALM_FOLDER}...'
 realms deploy --folder "${REALM_FOLDER}"
