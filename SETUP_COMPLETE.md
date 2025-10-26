@@ -18,9 +18,9 @@ realms-extension-vault/
 │   ├── __init__.py
 │   └── entry.py                # Extension API (get_balance, transfer, etc.)
 ├── frontend/
-│   ├── lib/extensions/vault_manager/
-│   ├── routes/(sidebar)/extensions/vault_manager/
-│   └── i18n/locales/extensions/vault_manager/
+│   ├── lib/extensions/vault/
+│   ├── routes/(sidebar)/extensions/vault/
+│   └── i18n/locales/extensions/vault/
 ├── tests/
 │   └── test_vault.py           # Test suite structure
 ├── manifest.json               # Extension metadata
@@ -35,7 +35,7 @@ realms-extension-vault/
 ### Key Files
 
 **manifest.json**
-- Name: `vault_manager`
+- Name: `vault`
 - Version: `0.1.0`
 - Realms compatibility: `>=0.1.0, <0.2.x`
 - Entry points: `get_balance`, `get_status`, `get_transactions`, `transfer`, `refresh`
@@ -70,8 +70,8 @@ realms-extension-vault/
 realms extension install --source /path/to/realms-extension-vault/
 
 # Realm operator installs
-realms extension install vault_manager \
-  --from https://github.com/smart-social-contracts/realms-extension-vault/releases/download/v0.1.0/vault_manager-0.1.0.zip
+realms extension install vault \
+  --from https://github.com/smart-social-contracts/realms-extension-vault/releases/download/v0.1.0/vault-0.1.0.zip
 ```
 
 ### Deployment
@@ -80,7 +80,7 @@ realm_backend canister
 ├── core/ (Realms core)
 ├── ggg/ (Realms entities)
 ├── extension_packages/
-│   └── vault_manager/        ← Extension installed here
+│   └── vault/        ← Extension installed here
 │       ├── vault_lib/
 │       │   ├── candid_types.py
 │       │   ├── entities.py
@@ -94,7 +94,7 @@ realm_backend canister
 # Treasury entity calls extension directly (same canister)
 from core.extensions import extension_async_call
 
-result = yield extension_async_call("vault_manager", "get_balance", args)
+result = yield extension_async_call("vault", "get_balance", args)
 # No inter-canister call - direct Python function call
 ```
 
@@ -115,7 +115,7 @@ dfx start --clean --background
 realms deploy --network local
 
 # Verify installation
-dfx canister call realm_backend extension_call '("vault_manager", "get_status", "{}")'
+dfx canister call realm_backend extension_call '("vault", "get_status", "{}")'
 ```
 
 ### 2. Implement Missing Core Logic
@@ -131,7 +131,7 @@ The `entry.py` file currently has the API structure but needs some core function
 
 Copy and adapt Svelte components:
 ```bash
-# Already copied from realms/extensions/vault_manager/frontend/
+# Already copied from realms/extensions/vault/frontend/
 # May need updates for new architecture
 ```
 
@@ -148,7 +148,7 @@ Complete the test suite in `tests/test_vault.py`:
 # When ready for release
 cd realms-extension-vault
 realms extension package .
-# Creates: vault_manager-0.1.0.zip
+# Creates: vault-0.1.0.zip
 ```
 
 ### 6. Publish Release
@@ -157,7 +157,7 @@ realms extension package .
 git tag -a v0.1.0 -m "Initial release"
 git push origin v0.1.0
 
-gh release create v0.1.0 vault_manager-0.1.0.zip \
+gh release create v0.1.0 vault-0.1.0.zip \
   --title "Vault Manager v0.1.0" \
   --notes "$(cat CHANGELOG.md)"
 ```

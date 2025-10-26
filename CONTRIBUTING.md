@@ -83,7 +83,7 @@ realms-extension-vault/
 
 3. Verify changes:
    ```bash
-   dfx canister call realm_backend extension_call '("vault_manager", "get_status", "{}")'
+   dfx canister call realm_backend extension_call '("vault", "get_status", "{}")'
    ```
 
 ### Frontend Changes
@@ -203,7 +203,7 @@ test: add integration tests for transfer function
    ```
 
 4. **Create GitHub release**
-   - Upload `vault_manager-0.2.0.zip`
+   - Upload `vault-0.2.0.zip`
    - Copy changelog entry to release notes
 
 ## Questions?
