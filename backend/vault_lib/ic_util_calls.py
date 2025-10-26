@@ -168,7 +168,7 @@ def get_account_transactions(
     owner_principal: str,
     max_results: nat,
     subaccount: Optional[List[int]] = None,
-    start_tx_id: Optional[nat] = 0,
+    start_tx_id: Optional[nat] = None,
 ) -> Async[GetAccountTransactionsResponse]:
     """
     Query the indexer canister for account transactions.
@@ -178,7 +178,7 @@ def get_account_transactions(
         owner_principal: The principal ID of the account owner
         max_results: Maximum number of transactions to return
         subaccount: Optional subaccount (as a list of bytes)
-        start_tx_id: Transaction ID to start retrieving from (for pagination)
+        start_tx_id: Transaction ID to start retrieving from (None = most recent, for pagination)
 
     Returns:
         A GetAccountTransactionsResponse object containing balance and transactions
@@ -195,6 +195,13 @@ def get_account_transactions(
             )
         )
 
+        logger.info(f"Indexer raw result type: {type(result)}")
+        logger.info(f"Indexer raw result hasattr Ok: {hasattr(result, 'Ok')}")
+        if hasattr(result, "Ok"):
+            logger.info(f"result.Ok type: {type(result.Ok)}")
+            logger.info(f"result.Ok: {result.Ok}")
+
+        # Check for Ok variant response (double-nested structure)
         if (
             hasattr(result, "Ok")
             and result.Ok is not None
@@ -202,15 +209,24 @@ def get_account_transactions(
             and "Ok" in result.Ok
         ):
             data = result.Ok["Ok"]
+            
+            # Convert balance to int if it's a string
+            balance = data.get("balance", 0)
+            if isinstance(balance, str):
+                balance = int(balance.replace("_", ""))
+            
+            logger.info(f"Parsed balance: {balance}")
+            logger.info(f"Transactions count: {len(data.get('transactions', []))}")
+            
             return GetAccountTransactionsResponse(
-                balance=data.get("balance", 0),
+                balance=balance,
                 transactions=data.get("transactions", []),
                 oldest_tx_id=data.get("oldest_tx_id"),
             )
 
         # Log errors but don't break the flow
         if hasattr(result, "Err") and result.Err is not None:
-            logger.debug(f"Error from indexer: {result.Err}")
+            logger.error(f"Error from indexer: {result.Err}")
 
     except Exception as e:
         logger.error(f"Exception in get_account_transactions: {str(e)}")

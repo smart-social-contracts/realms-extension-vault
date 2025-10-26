@@ -432,7 +432,7 @@ def refresh(args: str) -> Async[str]:
             owner_principal=vault_principal,
             max_results=app.max_results or 20,
             subaccount=None,
-            start_tx_id=0,
+            start_tx_id=None,  # None = start from most recent
         )
 
         logger.info(f"Successfully retrieved response: {response}")
