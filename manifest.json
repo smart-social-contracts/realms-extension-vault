@@ -30,8 +30,8 @@
   "url_path": null,
   "show_in_sidebar": true,
   "python_dependencies": [
-    "kybra>=0.10.0",
-    "kybra-simple-db>=1.0.0",
-    "kybra-simple-logging>=1.0.0"
+    "kybra==0.7.*",
+    "kybra-simple-db>=0.3.2",
+    "kybra-simple-logging==0.2.*"
   ]
 }
