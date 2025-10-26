@@ -8,6 +8,7 @@ This script unifies the dfx.json configuration so all canisters
 
 import json
 import sys
+import os
 from pathlib import Path
 
 
@@ -43,6 +44,10 @@ def merge_dfx_json(test_dfx_path: str, realm_dfx_path: str) -> bool:
     # Track if we made any changes
     changes_made = False
 
+    # Detect if running in Docker to determine correct path prefix
+    is_docker = os.path.exists('/.dockerenv')
+    path_prefix = "extension-root/tests/" if is_docker else "../tests/"
+
     # Add test canisters to realm dfx.json
     for canister_name, canister_config in test_dfx.get("canisters", {}).items():
         if canister_name not in realm_dfx["canisters"]:
@@ -50,10 +55,10 @@ def merge_dfx_json(test_dfx_path: str, realm_dfx_path: str) -> bool:
             adjusted_config = canister_config.copy()
 
             if "wasm" in adjusted_config:
-                adjusted_config["wasm"] = "../tests/" + adjusted_config["wasm"]
+                adjusted_config["wasm"] = path_prefix + adjusted_config["wasm"]
 
             if "candid" in adjusted_config:
-                adjusted_config["candid"] = "../tests/" + adjusted_config["candid"]
+                adjusted_config["candid"] = path_prefix + adjusted_config["candid"]
 
             realm_dfx["canisters"][canister_name] = adjusted_config
             print(f"✅ Added {canister_name} to unified dfx.json")
