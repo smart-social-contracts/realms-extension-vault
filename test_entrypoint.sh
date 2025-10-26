@@ -9,6 +9,9 @@ CITIZENS_COUNT=5
 REALM_FOLDER="generated_realm"
 EXTENSION_DIR="extension-root"
 
+# Download test artifacts
+tests/download_test_artifacts.sh
+
 # Run from home directory where realms framework lives (if in Docker)
 if [ -f /.dockerenv ]; then
     cd /app
