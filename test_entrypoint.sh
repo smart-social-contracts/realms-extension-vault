@@ -56,7 +56,7 @@ pip install -e cli/ --force
 # realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
 
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
-realms create --random #--citizens "${CITIZENS_COUNT}"
+realms create --no-extensions #--random #--citizens "${CITIZENS_COUNT}"
 
 echo '[INFO] Removing old vault extension files...'
 rm -rf src/realm_backend/extension_packages/vault || true
