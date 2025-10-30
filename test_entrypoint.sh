@@ -49,64 +49,18 @@ rm -rf "${REALM_FOLDER}"
 echo '[INFO] Installing realms cli...'
 pip install -e cli/ --force
 
-# DO NOT USE THIS APPROACH
-# echo '[INFO] Packaging vault extension...'
-# realms extension package --extension-id "${EXTENSION_ID}" --source-dir .. --package-path ${EXTENSION_ID}.zip #"${EXTENSION_DIR}" --
-# echo '[INFO] Installing vault extension...'
-# realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
+rm -rf extensions
 
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
-realms create --no-extensions #--random #--citizens "${CITIZENS_COUNT}"
+realms create #--random #--citizens "${CITIZENS_COUNT}"
 
-echo '[INFO] Removing old vault extension files...'
-rm -rf src/realm_backend/extension_packages/vault || true
-rm -rf src/realm_frontend/src/lib/extensions/vault || true
-rm -rf src/realm_frontend/src/routes/\(sidebar\)/extensions/vault || true
+echo '[INFO] Uninstalling all extensions...'
+realms extension uninstall --all
+echo '[INFO] Packaging vault extension...'
+realms extension package --extension-id "${EXTENSION_ID}" --source-dir .. --package-path ${EXTENSION_ID}.zip #"${EXTENSION_DIR}" --
+echo '[INFO] Installing vault extension...'
+realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
 
-echo '[INFO] Manually copying custom vault extension (backend)...'
-cp -r "${EXTENSION_SOURCE_DIR}/vault/backend" src/realm_backend/extension_packages/vault
-cp "${EXTENSION_SOURCE_DIR}/vault/manifest.json" src/realm_backend/extension_packages/vault/
-
-echo '[INFO] Manually copying custom vault extension (frontend)...'
-# Copy frontend lib components
-if [ -d "${EXTENSION_SOURCE_DIR}/vault/frontend/lib/extensions/vault" ]; then
-    mkdir -p src/realm_frontend/src/lib/extensions
-    cp -r "${EXTENSION_SOURCE_DIR}/vault/frontend/lib/extensions/vault" src/realm_frontend/src/lib/extensions/
-fi
-
-# Copy frontend routes
-if [ -d "${EXTENSION_SOURCE_DIR}/vault/frontend/routes/(sidebar)/extensions/vault" ]; then
-    mkdir -p src/realm_frontend/src/routes/\(sidebar\)/extensions
-    cp -r "${EXTENSION_SOURCE_DIR}/vault/frontend/routes/(sidebar)/extensions/vault" src/realm_frontend/src/routes/\(sidebar\)/extensions/
-fi
-
-# Copy i18n translations
-if [ -d "${EXTENSION_SOURCE_DIR}/vault/frontend/i18n/locales/extensions/vault" ]; then
-    mkdir -p src/realm_frontend/i18n/locales/extensions
-    cp -r "${EXTENSION_SOURCE_DIR}/vault/frontend/i18n/locales/extensions/vault" src/realm_frontend/i18n/locales/extensions/
-fi
-
-echo '[INFO] Creating stub for admin_dashboard extension (if referenced)...'
-# Create minimal stub to prevent build errors if admin_dashboard is referenced
-if ! [ -f "src/realm_frontend/src/lib/extensions/admin_dashboard/AdminDashboard.svelte" ]; then
-    mkdir -p src/realm_frontend/src/lib/extensions/admin_dashboard
-    cat > src/realm_frontend/src/lib/extensions/admin_dashboard/AdminDashboard.svelte << 'EOF'
-<script>
-  // Stub component for admin_dashboard extension
-  // This is a placeholder to prevent build errors during testing
-</script>
-
-<div>
-  <p>Admin Dashboard extension not installed</p>
-</div>
-EOF
-fi
-
-echo '[INFO] Updating extension imports...'
-# Make sure vault is in the imports (it should already be there)
-if ! grep -q "import extension_packages.vault.entry" src/realm_backend/extension_packages/extension_imports.py; then
-    echo "import extension_packages.vault.entry" >> src/realm_backend/extension_packages/extension_imports.py
-fi
 
 # Stop previous dfx instances and clean up
 echo '[INFO] Stopping previous dfx instances...'
