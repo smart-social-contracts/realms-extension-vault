@@ -13,8 +13,8 @@
 
 <MetaTag {path} {description} {title} {subtitle} />
 
-<main class="fixed inset-0 lg:ml-64 overflow-auto">
-	<div class="w-full h-full">
+<main class="w-full">
+	<div class="w-full pb-32">
 		<VaultManager />
 	</div>
 </main>

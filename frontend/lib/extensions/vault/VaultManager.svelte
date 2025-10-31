@@ -151,7 +151,7 @@ await loadTransactions();
 });
 </script>
 
-<div class="p-6 pb-48 space-y-6 min-h-screen">
+<div class="p-6 space-y-6 mb-64">
 <div class="flex justify-between items-center">
 <h1 class="text-3xl font-bold">{$_('extensions.vault.title')}</h1>
 <button
