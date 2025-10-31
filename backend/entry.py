@@ -322,7 +322,7 @@ def transfer(args: str) -> Async[str]:
 
     try:
         from .vault_lib.candid_types import Account, ICRCLedger, TransferArg
-        from .vault_lib.entities import Balance, Canisters, VaultTransaction, app_data
+        from .vault_lib.entities import Canisters, app_data
 
         # Parse args
         params = json.loads(args) if isinstance(args, str) else args
@@ -362,20 +362,20 @@ def transfer(args: str) -> Async[str]:
 
         # Handle result
         if hasattr(result, "Ok") and result.Ok is not None:
-            tx_id = result.Ok
+            tx_id = str(result.Ok)
 
             # Create transaction record
-            VaultTransaction(
-                _id=tx_id,
+            Transfer(
+                id=tx_id,
                 principal_from=ic.id().to_str(),
                 principal_to=to_principal,
                 amount=amount,
-                timestamp=ic.time(),
+                timestamp=str(ic.time()),
                 kind="transfer",
             )
 
             # Update balances
-            balance = Balance[to_principal] or Balance(_id=to_principal, amount=0)
+            balance = Balance[to_principal] or Balance(id=to_principal, amount=0)
             balance.amount -= amount
 
             logger.info(
