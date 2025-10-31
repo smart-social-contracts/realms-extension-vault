@@ -54,12 +54,8 @@ rm -rf extensions
 echo '[INFO] Creating test realm with ${CITIZENS_COUNT} citizens...'
 realms create #--random #--citizens "${CITIZENS_COUNT}"
 
-echo '[INFO] Uninstalling all extensions...'
-realms extension uninstall --all
-echo '[INFO] Packaging vault extension...'
-realms extension package --extension-id "${EXTENSION_ID}" --source-dir .. --package-path ${EXTENSION_ID}.zip #"${EXTENSION_DIR}" --
-echo '[INFO] Installing vault extension...'
-realms extension install --extension-id "${EXTENSION_ID}" --package-path ${EXTENSION_ID}.zip #"/app/${EXTENSION_ID}.zip"
+# Install the vault extension
+"${SCRIPT_DIR}/install_extension.sh" "${EXTENSION_ID}" ..
 
 
 # Stop previous dfx instances and clean up

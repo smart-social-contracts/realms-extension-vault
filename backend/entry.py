@@ -13,7 +13,9 @@ from kybra import Async, Principal, ic
 from kybra_simple_logging import get_logger
 
 from .vault_lib.constants import CANISTER_PRINCIPALS, MAX_ITERATION_COUNT, MAX_RESULTS
-from .vault_lib.entities import Balance, Canisters, app_data
+from .vault_lib.entities import Canisters, app_data
+
+from ggg import Transfer, Balance
 
 logger = get_logger("extensions.vault")
 
@@ -30,8 +32,8 @@ def register_entities():
         vault_entities.TestModeData,
         vault_entities.Canisters,
         vault_entities.Category,
-        vault_entities.VaultTransaction,
-        vault_entities.Balance,
+        # vault_entities.VaultTransaction,
+        # vault_entities.Balance,
     ]
 
     for entity_type in vault_entity_types:
@@ -88,9 +90,9 @@ def initialize(args: str):
         app_data().max_iteration_count = MAX_ITERATION_COUNT
 
     canister_id = ic.id().to_str()
-    if not Balance[canister_id]:
-        logger.info("Creating vault balance record")
-        Balance(_id=canister_id, amount=0)
+    # if not Balance[canister_id]:
+    #     logger.info("Creating vault balance record")
+    #     Balance(_id=canister_id, amount=0)
 
     logger.info(
         f"Canisters: {[canister.serialize() for canister in Canisters.instances()]}"
@@ -408,7 +410,8 @@ def refresh(args: str) -> Async[str]:
     logger.info("vault.refresh called")
 
     try:
-        from .vault_lib.entities import Balance, Canisters, VaultTransaction, app_data
+        # from .vault_lib.entities import Balance, Canisters, VaultTransaction, app_data
+        from .vault_lib.entities import Canisters, app_data
         from .vault_lib.ic_util_calls import get_account_transactions
 
         app = app_data()
@@ -438,7 +441,7 @@ def refresh(args: str) -> Async[str]:
             tx = account_tx["transaction"]
 
             # Skip if already exists
-            if VaultTransaction[tx_id]:
+            if Transfer[tx_id]:
                 continue
 
             # Process based on type
@@ -449,8 +452,8 @@ def refresh(args: str) -> Async[str]:
                 amount = transfer_data["amount"]
 
                 # Create transaction record
-                VaultTransaction(
-                    _id=tx_id,
+                Transfer(
+                    id=tx_id,
                     principal_from=principal_from,
                     principal_to=principal_to,
                     amount=amount,
@@ -462,13 +465,13 @@ def refresh(args: str) -> Async[str]:
                 if principal_to == vault_principal:
                     # Deposit: user sent to vault
                     balance = Balance[principal_from] or Balance(
-                        _id=principal_from, amount=0
+                        id=principal_from, amount=0
                     )
                     balance.amount += amount
                 elif principal_from == vault_principal:
                     # Withdrawal: vault sent to user
                     balance = Balance[principal_to] or Balance(
-                        _id=principal_to, amount=0
+                        id=principal_to, amount=0
                     )
                     balance.amount -= amount
 
